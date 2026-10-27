@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>아르바이트 월급 관리</title>
+<style>
+:root {
+  --bg:#f5f7fb; --card:#fff; --text:#1f2937; --muted:#6b7280;
+  --line:#e5e7eb; --primary:#2563eb; --primary-soft:#eff6ff;
+  --red:#dc2626; --green:#047857; --shadow:0 8px 24px rgba(15,23,42,.06);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,"Malgun Gothic","맑은 고딕",sans-serif}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app{max-width:1250px;margin:0 auto;padding:28px 22px 42px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:22px}
+h1{font-size:clamp(25px,3vw,34px);margin:0 0 8px;letter-spacing:-1px}
+.subtitle{margin:0;color:var(--muted);font-size:14px;line-height:1.5}
+.header-tag{background:#dbeafe;color:#1d4ed8;padding:9px 12px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:20px;margin-bottom:18px}
+.settings{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) auto;gap:16px;align-items:end}
+.field label{display:block;font-size:13px;font-weight:700;margin-bottom:8px}
+.field input,.field select{width:100%;height:44px;padding:0 12px;border:1px solid #d1d5db;border-radius:10px;background:#fff;color:var(--text)}
+.field input:focus,.field select:focus{outline:3px solid #bfdbfe;border-color:var(--primary)}
+.help{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.4}
+.btn{border:0;border-radius:10px;padding:12px 16px;font-weight:700;transition:.15s}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:#1d4ed8}
+.btn-light{background:#f3f4f6;color:#374151}
+.btn-light:hover{background:#e5e7eb}
+.btn-danger{background:#fee2e2;color:#991b1b}
+.monthbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.month-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.month-controls button{width:40px;height:40px;padding:0;font-size:20px}
+.month-title{font-size:24px;font-weight:800;letter-spacing:-.5px;min-width:150px;text-align:center}
+.month-pickers{display:flex;gap:8px}
+.month-pickers select{height:40px;padding:0 9px;border:1px solid var(--line);border-radius:9px;background:white}
+.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid var(--line);border-left:1px solid var(--line);border-radius:12px;overflow:hidden}
+.weekday{padding:12px 6px;text-align:center;font-weight:700;font-size:13px;background:#f9fafb;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.weekday:first-child{color:var(--red)} .weekday:last-child{color:#2563eb}
+.day{position:relative;min-height:125px;padding:10px 9px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);background:white;cursor:pointer;transition:background .12s;min-width:0}
+.day:hover{background:#f8fbff}
+.day.selected{outline:2px solid var(--primary);outline-offset:-2px;background:var(--primary-soft)}
+.day.other{background:#fafafa;color:#b6bbc5}
+.day.today .day-number{background:var(--primary);color:white;border-radius:50%;width:27px;height:27px;display:inline-flex;align-items:center;justify-content:center}
+.day-top{display:flex;align-items:center;justify-content:space-between;gap:4px}
+.day-number{font-size:14px;font-weight:700;width:27px;height:27px;display:inline-flex;align-items:center;justify-content:center}
+.day-hours{margin-top:9px;font-size:11px;color:var(--muted);overflow-wrap:anywhere}
+.day-pay{margin-top:4px;font-size:13px;font-weight:800;color:var(--green);overflow-wrap:anywhere}
+.day-note{font-size:10px;color:#64748b;margin-top:4px}
+.dot{width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block}
+.summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.summary-card{padding:17px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.summary-label{font-size:13px;color:var(--muted);margin-bottom:8px}
+.summary-value{font-size:clamp(20px,2.5vw,28px);font-weight:800;letter-spacing:-.5px;overflow-wrap:anywhere}
+.summary-unit{font-size:12px;color:var(--muted);margin-top:5px}
+.editor-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+.section-title{font-size:18px;margin:0 0 5px}
+.section-sub{font-size:13px;color:var(--muted);margin:0 0 18px;line-height:1.5}
+.editor-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.editor-fields .full{grid-column:1/-1}
+.inline-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.editor-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.selected-date{font-weight:800;color:var(--primary)}
+.empty-state{padding:20px;border:1px dashed #cbd5e1;border-radius:12px;color:var(--muted);font-size:13px;line-height:1.6}
+.notice{margin-top:14px;padding:12px 14px;border-radius:10px;background:#fffbeb;color:#92400e;font-size:12px;line-height:1.6}
+.message{display:none;padding:11px 13px;border-radius:10px;margin-top:12px;font-size:13px}
+.message.show{display:block}
+.message.error{background:#fee2e2;color:#991b1b}
+.message.success{background:#dcfce7;color:#166534}
+.footer-note{color:var(--muted);font-size:12px;line-height:1.6;margin:16px 2px 0}
+@media(max-width:800px){
+ .app{padding:20px 12px 30px}
+ .settings{grid-template-columns:1fr 1fr}
+ .settings .setting-action{grid-column:1/-1}
+ .day{min-height:95px;padding:7px 5px}
+ .day-hours{font-size:10px;margin-top:6px}
+ .day-pay{font-size:11px}
+ .day-note{font-size:9px}
+ .editor-layout{grid-template-columns:1fr}
+ .month-title{font-size:20px;min-width:125px}
+}
+@media(max-width:520px){
+ header{align-items:flex-start}
+ .header-tag{font-size:10px;padding:7px 8px}
+ .panel{padding:14px;border-radius:14px}
+ .settings{grid-template-columns:1fr}
+ .settings .setting-action{grid-column:auto}
+ .monthbar{align-items:flex-start;flex-direction:column}
+ .month-controls{width:100%;justify-content:space-between}
+ .month-title{flex:1}
+ .month-pickers{width:100%}
+ .month-pickers select{flex:1}
+ .weekday{font-size:11px;padding:10px 2px}
+ .day{min-height:77px;padding:5px 3px}
+ .day-number{font-size:12px;width:22px;height:22px}
+ .day.today .day-number{width:22px;height:22px}
+ .day-hours{font-size:9px;line-height:1.25}
+ .day-pay{font-size:10px;line-height:1.25}
+ .day-note{display:none}
+ .summary-grid{grid-template-columns:1fr}
+ .summary-card{padding:14px}
+ .summary-value{font-size:24px}
+ .editor-fields{grid-template-columns:1fr}
+ .editor-fields .full{grid-column:auto}
+ .inline-fields{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <h1>아르바이트 월급 관리</h1>
+      <p class="subtitle">근무 기록을 입력하고 이번 달 예상 급여를 한눈에 확인하세요.</p>
+    </div>
+    <div class="header-tag">내 기기에서 자동 저장</div>
+  </header>
+
+  <section class="panel">
+    <div class="settings">
+      <div class="field">
+        <label for="hourlyRate">기본 시급 (원)</label>
+        <input id="hourlyRate" type="number" min="1" max="1000000" step="10" placeholder="예: 10320" inputmode="numeric">
+        <div class="help">변경하면 저장된 모든 근무일의 급여가 다시 계산됩니다.</div>
+      </div>
+      <div class="field">
+        <label for="payBasis">급여 계산 기준</label>
+        <select id="payBasis">
+          <option value="minute">분 단위로 계산</option>
+          <option value="quarter">15분 단위로 계산</option>
+          <option value="half">30분 단위로 계산</option>
+        </select>
+        <div class="help">입력한 근무시간에서 휴게시간을 뺍니다.</div>
+      </div>
+      <div class="setting-action">
+        <button class="btn btn-primary" id="saveSettings">설정 저장</button>
+      </div>
+    </div>
+    <div id="settingsMessage" class="message" role="status"></div>
+  </section>
+
+  <section class="panel">
+    <div class="monthbar">
+      <div class="month-controls">
+        <button class="btn btn-light" id="prevMonth" aria-label="이전 달">‹</button>
+        <div class="month-title" id="monthTitle">2026년 10월</div>
+        <button class="btn btn-light" id="nextMonth" aria-label="다음 달">›</button>
+        <button class="btn btn-light" id="todayBtn">이번 달</button>
+      </div>
+      <div class="month-pickers">
+        <select id="yearSelect" aria-label="연도 선택"></select>
+        <select id="monthSelect" aria-label="월 선택"></select>
+      </div>
+    </div>
+    <div class="calendar" id="calendar" aria-label="월별 근무 달력"></div>
+    <p class="footer-note">날짜 칸을 선택하면 해당 날짜의 근무시간을 등록하거나 수정할 수 있습니다. 다른 달에 입력한 기록도 이 브라우저에 저장됩니다.</p>
+  </section>
+
+  <section class="panel">
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-label">이번 달 예상 급여</div>
+        <div class="summary-value" id="monthPay">0원</div>
+        <div class="summary-unit">세금·수당 반영 전 금액</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">이번 달 총 근무시간</div>
+        <div class="summary-value" id="monthHours">0시간</div>
+        <div class="summary-unit" id="workDays">근무 기록 0일</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-label">설정한 시급</div>
+        <div class="summary-value" id="summaryRate">미설정</div>
+        <div class="summary-unit">등록된 근무 기록에 적용</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel editor-layout">
+    <div>
+      <h2 class="section-title">근무시간 등록</h2>
+      <p class="section-sub">선택 날짜: <span id="selectedDate" class="selected-date">날짜를 선택하세요</span></p>
+      <div id="noDate" class="empty-state">위 달력에서 근무한 날짜를 선택하세요. 선택한 날짜의 출근·퇴근 시간과 휴게시간을 입력할 수 있습니다.</div>
+      <form id="shiftForm" hidden>
+        <div class="editor-fields">
+          <div class="field">
+            <label for="startTime">출근 시간</label>
+            <input id="startTime" type="time" required value="09:00">
+          </div>
+          <div class="field">
+            <label for="endTime">퇴근 시간</label>
+            <input id="endTime" type="time" required value="18:00">
+          </div>
+          <div class="field">
+            <label for="breakMinutes">휴게시간 (분)</label>
+            <input id="breakMinutes" type="number" min="0" max="1440" step="5" value="60" required inputmode="numeric">
+          </div>
+          <div class="field">
+            <label for="shiftNote">메모 (선택)</label>
+            <input id="shiftNote" type="text" maxlength="60" placeholder="예: 마감 근무">
+          </div>
+          <div class="full">
+            <div class="summary-card">
+              <div class="summary-label">선택 날짜 예상 일급</div>
+              <div class="summary-value" id="dayPayPreview">0원</div>
+              <div class="summary-unit" id="dayHoursPreview">유급 근무시간 0시간</div>
+            </div>
+          </div>
+        </div>
+        <div class="editor-actions">
+          <button type="submit" class="btn btn-primary">근무 기록 저장</button>
+          <button type="button" class="btn btn-light" id="clearForm">입력 초기화</button>
+          <button type="button" class="btn btn-danger" id="deleteShift">이 날짜 기록 삭제</button>
+        </div>
+      </form>
+      <div id="formMessage" class="message" role="status"></div>
+    </div>
+    <div>
+      <h2 class="section-title">급여 계산 안내</h2>
+      <p class="section-sub">입력한 기록을 바탕으로 예상 급여를 계산합니다.</p>
+      <div class="empty-state">
+        <strong>계산 방식</strong><br>
+        근무시간 = 퇴근 시간 − 출근 시간 − 휴게시간<br>
+        일급 = 유급 근무시간 × 설정 시급<br>
+        월급 = 해당 월의 모든 일급 합계
+      </div>
+      <div class="notice">
+        이 앱은 개인 기록용 예상 계산기입니다. 자정 이후 퇴근은 다음 날 퇴근으로 계산합니다. 주휴수당, 연장·야간·휴일근로 가산수당, 세금 및 4대 보험 공제는 자동 반영되지 않으므로 실제 지급액과 다를 수 있습니다.
+      </div>
+      <div class="editor-actions">
+        <button type="button" class="btn btn-light" id="exportCsv">이번 달 기록 CSV 저장</button>
+        <button type="button" class="btn btn-light" id="clearAll">전체 기록 초기화</button>
+      </div>
+      <p class="footer-note">기록은 현재 브라우저의 로컬 저장 공간에 보관됩니다. 브라우저 데이터 삭제나 다른 기기·브라우저 사용 시 기록이 사라지거나 공유되지 않을 수 있습니다. CSV 파일로 백업할 수 있습니다.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const STORAGE_KEY = 'partTimePayManager_v1';
+  const $ = id => document.getElementById(id);
+  const money = n => Math.round(n).toLocaleString('ko-KR') + '원';
+  const pad = n => String(n).padStart(2, '0');
+  const dateKey = (y,m,d) => `${y}-${pad(m+1)}-${pad(d)}`;
+  const parseTime = s => {
+    if (!/^\d{2}:\d{2}$/.test(s || '')) return NaN;
+    const [h,m] = s.split(':').map(Number);
+    return h <= 23 && m <= 59 ? h*60+m : NaN;
+  };
+  const defaultState = () => ({
+    rate: '', basis: 'minute', shifts: {}, selected: '', viewYear: new Date().getFullYear(),
+    viewMonth: new Date().getMonth()
+  });
+  let state = defaultState();
+  let selectedKey = '';
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        state.rate = parsed.rate ?? '';
+        state.basis = ['minute','quarter','half'].includes(parsed.basis) ? parsed.basis : 'minute';
+        state.shifts = parsed.shifts && typeof parsed.shifts === 'object' ? parsed.shifts : {};
+        state.viewYear = Number.isInteger(parsed.viewYear) ? parsed.viewYear : state.viewYear;
+        state.viewMonth = Number.isInteger(parsed.viewMonth) && parsed.viewMonth >= 0 && parsed.viewMonth <= 11 ? parsed.viewMonth : state.viewMonth;
+        state.selected = typeof parsed.selected === 'string' ? parsed.selected : '';
+      }
+    } catch (e) {
+      console.warn('저장된 기록을 불러오지 못했습니다.', e);
+    }
+  }
+  function persist() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        rate: state.rate, basis: state.basis, shifts: state.shifts,
+        viewYear: state.viewYear, viewMonth: state.viewMonth, selected: selectedKey
+      }));
+      return true;
+    } catch (e) {
+      showMessage('settingsMessage', '저장 공간에 기록하지 못했습니다. 브라우저 저장 공간 설정을 확인하세요.', 'error');
+      return false;
+    }
+  }
+  function getRate() {
+    const n = Number($('hourlyRate').value);
+    return Number.isFinite(n) && n > 0 && n <= 1000000 ? n : 0;
+  }
+  function roundMinutes(minutes) {
+    const unit = state.basis === 'quarter' ? 15 : state.basis === 'half' ? 30 : 1;
+    return Math.floor(minutes / unit) * unit;
+  }
+  function calcShift(shift) {
+    if (!shift) return {minutes:0, pay:0, rawMinutes:0};
+    let start = parseTime(shift.start);
+    let end = parseTime(shift.end);
+    let br = Number(shift.breakMinutes);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || !Number.isFinite(br)) return {minutes:0,pay:0,rawMinutes:0};
+    if (end <= start) end += 1440;
+    const rawMinutes = Math.max(0, end - start - br);
+    const minutes = roundMinutes(rawMinutes);
+    return {minutes, rawMinutes, pay: minutes / 60 * getRate()};
+  }
+  function showMessage(id, text, type='success') {
+    const el = $(id);
+    el.textContent = text;
+    el.className = `message show ${type}`;
+    if (id === 'settingsMessage') setTimeout(() => { el.className = 'message'; }, 4500);
+  }
+  function clearMessage(id) { $(id).className = 'message'; }
+  function monthStats(y,m) {
+    let totalMinutes = 0, totalPay = 0, days = 0;
+    const prefix = `${y}-${pad(m+1)}-`;
+    for (const [key, shift] of Object.entries(state.shifts)) {
+      if (!key.startsWith(prefix)) continue;
+      const c = calcShift(shift);
+      if (c.rawMinutes > 0) { totalMinutes += c.minutes; totalPay += c.pay; days++; }
+    }
+    return {totalMinutes,totalPay,days};
+  }
+  function renderPickers() {
+    const years = $('yearSelect');
+    const current = new Date().getFullYear();
+    const minYear = Math.min(current - 5, state.viewYear - 1);
+    const maxYear = Math.max(current + 5, state.viewYear + 1);
+    years.innerHTML = '';
+    for (let y=minYear; y<=maxYear; y++) {
+      const opt = document.createElement('option');
+      opt.value = y; opt.textContent = `${y}년`; years.appendChild(opt);
+    }
+    years.value = state.viewYear;
+    const months = $('monthSelect');
+    months.innerHTML = '';
+    for (let m=0;m<12;m++) {
+      const opt = document.createElement('option');
+      opt.value = m; opt.textContent = `${m+1}월`; months.appendChild(opt);
+    }
+    months.value = state.viewMonth;
+    $('monthTitle').textContent = `${state.viewYear}년 ${state.viewMonth+1}월`;
+  }
+  function renderCalendar() {
+    renderPickers();
+    const root = $('calendar');
+    root.innerHTML = '';
+    ['일','월','화','수','목','금','토'].forEach((name,i) => {
+      const el = document.createElement('div');
+      el.className = 'weekday';
+      el.textContent = name;
+      root.appendChild(el);
+    });
+    const first = new Date(state.viewYear,state.viewMonth,1);
+    const startOffset = first.getDay();
+    const daysInMonth = new Date(state.viewYear,state.viewMonth+1,0).getDate();
+    const prevDays = new Date(state.viewYear,state.viewMonth,0).getDate();
+    const today = new Date();
+    const totalCells = Math.ceil((startOffset + daysInMonth)/7)*7;
+    for (let i=0;i<totalCells;i++) {
+      let day, y=state.viewYear, m=state.viewMonth, other=false;
+      if (i < startOffset) {
+        day = prevDays - startOffset + i + 1; other=true;
+        const d = new Date(state.viewYear,state.viewMonth-1,day); y=d.getFullYear(); m=d.getMonth();
+      } else if (i >= startOffset+daysInMonth) {
+        day = i - (startOffset+daysInMonth) + 1; other=true;
+        const d = new Date(state.viewYear,state.viewMonth+1,day); y=d.getFullYear(); m=d.getMonth();
+      } else day = i - startOffset + 1;
+      const key = dateKey(y,m,day);
+      const shift = state.shifts[key];
+      const calc = calcShift(shift);
+      const el = document.createElement('div');
+      el.className = 'day' + (other?' other':'') + (key===selectedKey?' selected':'') +
+        (y===today.getFullYear() && m===today.getMonth() && day===today.getDate()?' today':'');
+      el.tabIndex = 0;
+      el.setAttribute('role','button');
+      el.setAttribute('aria-label', `${y}년 ${m+1}월 ${day}일${shift ? ', 예상 일급 '+Math.round(calc.pay)+'원' : ''}`);
+      const top = document.createElement('div'); top.className='day-top';
+      const num = document.createElement('span'); num.className='day-number'; num.textContent=day;
+      top.appendChild(num);
+      if (shift) { const dot=document.createElement('span'); dot.className='dot'; dot.setAttribute('aria-hidden','true'); top.appendChild(dot); }
+      el.appendChild(top);
+      if (shift) {
+        const hours=document.createElement('div'); hours.className='day-hours';
+        hours.textContent = `${(calc.minutes/60).toLocaleString('ko-KR',{maximumFractionDigits:2})}시간`;
+        el.appendChild(hours);
+        const pay=document.createElement('div'); pay.className='day-pay'; pay.textContent=money(calc.pay);
+        el.appendChild(pay);
+        if (shift.note) { const note=document.createElement('div'); note.className='day-note'; note.textContent=shift.note; el.appendChild(note); }
+      }
+      el.addEventListener('click', () => selectDate(key));
+      el.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){e.preventDefault();selectDate(key);} });
+      root.appendChild(el);
+    }
+    renderSummary();
+  }
+  function renderSummary() {
+    const stats = monthStats(state.viewYear,state.viewMonth);
+    $('monthPay').textContent = money(stats.totalPay);
+    $('monthHours').textContent = `${(stats.totalMinutes/60).toLocaleString('ko-KR',{maximumFractionDigits:2})}시간`;
+    $('workDays').textContent = `근무 기록 ${stats.days}일`;
+    $('summaryRate').textContent = getRate() ? money(getRate()) : '미설정';
+  }
+  function selectDate(key) {
+    selectedKey = key;
+    state.selected = key;
+    const [y,m,d] = key.split('-').map(Number);
+    state.viewYear = y; state.viewMonth = m-1;
+    $('selectedDate').textContent = `${y}년 ${m}월 ${d}일`;
+    $('noDate').hidden = true;
+    $('shiftForm').hidden = false;
+    clearMessage('formMessage');
+    const shift = state.shifts[key];
+    if (shift) {
+      $('startTime').value = shift.start || '09:00';
+      $('endTime').value = shift.end || '18:00';
+      $('breakMinutes').value = shift.breakMinutes ?? 60;
+      $('shiftNote').value = shift.note || '';
+      $('deleteShift').disabled = false;
+    } else {
+      $('startTime').value = '09:00';
+      $('endTime').value = '18:00';
+      $('breakMinutes').value = 60;
+      $('shiftNote').value = '';
+      $('deleteShift').disabled = true;
+    }
+    renderCalendar();
+    updatePreview();
+    persist();
+  }
+  function updatePreview() {
+    const start = parseTime($('startTime').value);
+    const end0 = parseTime($('endTime').value);
+    const br = Number($('breakMinutes').value);
+    if (!Number.isFinite(start) || !Number.isFinite(end0) || !Number.isFinite(br) || br < 0) {
+      $('dayPayPreview').textContent = '입력 확인';
+      $('dayHoursPreview').textContent = '출근·퇴근·휴게시간을 확인하세요.';
+      return;
+    }
+    const end = end0 <= start ? end0 + 1440 : end0;
+    const raw = end - start - br;
+    if (raw < 0) {
+      $('dayPayPreview').textContent = '입력 확인';
+      $('dayHoursPreview').textContent = '휴게시간이 총 근무시간보다 깁니다.';
+      return;
+    }
+    const minutes = roundMinutes(raw);
+    $('dayPayPreview').textContent = money(minutes/60*getRate());
+    $('dayHoursPreview').textContent = `유급 근무시간 ${(minutes/60).toLocaleString('ko-KR',{maximumFractionDigits:2})}시간`;
+  }
+  function navigateMonth(delta) {
+    const d = new Date(state.viewYear,state.viewMonth+delta,1);
+    state.viewYear=d.getFullYear(); state.viewMonth=d.getMonth();
+    persist(); renderCalendar();
+  }
+  function saveSettings() {
+    const value = $('hourlyRate').value.trim();
+    const n = Number(value);
+    if (!value || !Number.isFinite(n) || n <= 0 || n > 1000000) {
+      showMessage('settingsMessage','시급은 1원 이상 1,000,000원 이하의 숫자로 입력하세요.','error');
+      $('hourlyRate').focus(); return;
+    }
+    state.rate = n;
+    state.basis = $('payBasis').value;
+    const saved = persist();
+    renderCalendar();
+    updatePreview();
+    if (saved) {
+      showMessage('settingsMessage','시급 및 계산 기준을 저장했습니다. 저장된 근무 기록에 새 시급이 적용됩니다.','success');
+    } else {
+      showMessage('settingsMessage','설정은 화면에 반영했지만 브라우저 저장 공간에 저장하지 못했습니다. 브라우저 설정을 확인하세요.','error');
+    }
+  }
+  $('shiftForm').addEventListener('submit', e => {
+    e.preventDefault();
+    clearMessage('formMessage');
+    if (!selectedKey) { showMessage('formMessage','먼저 달력에서 날짜를 선택하세요.','error'); return; }
+    const rate = getRate();
+    if (!rate) { showMessage('formMessage','먼저 올바른 시급을 입력하고 설정 저장을 눌러주세요.','error'); $('hourlyRate').focus(); return; }
+    const start = $('startTime').value, end = $('endTime').value;
+    const startMin = parseTime(start), endMin = parseTime(end);
+    const br = Number($('breakMinutes').value);
+    if (!Number.isFinite(startMin) || !Number.isFinite(endMin)) {
+      showMessage('formMessage','출근 시간과 퇴근 시간을 모두 입력하세요.','error'); return;
+    }
+    if (!Number.isFinite(br) || br < 0 || br > 1440 || !$('breakMinutes').value.trim()) {
+      showMessage('formMessage','휴게시간은 0~1440분 사이의 숫자로 입력하세요.','error'); return;
+    }
+    const endAdjusted = endMin <= startMin ? endMin + 1440 : endMin;
+    if (endAdjusted - startMin - br <= 0) {
+      showMessage('formMessage','휴게시간을 뺀 근무시간이 0 이하입니다. 입력값을 확인하세요.','error'); return;
+    }
+    // 근무 기록 저장 시 현재 입력한 시급과 계산 기준도 함께 저장합니다.
+    // 별도로 '설정 저장' 버튼을 누르지 않아도 기록과 시급이 유지됩니다.
+    state.rate = rate;
+    state.basis = $('payBasis').value;
+    state.shifts[selectedKey] = {start,end,breakMinutes:br,note:$('shiftNote').value.trim()};
+
+    const saved = persist();
+    renderCalendar();
+    updatePreview();
+    $('deleteShift').disabled = false;
+
+    if (saved) {
+      showMessage('formMessage','근무 기록과 시급을 저장했습니다. 브라우저를 다시 열어도 기록이 유지됩니다.','success');
+    } else {
+      showMessage('formMessage','기록은 화면에 반영했지만 브라우저 저장 공간에 저장하지 못했습니다. 브라우저의 사이트 데이터/로컬 저장 권한을 확인하세요.','error');
+    }
+  });
+  function clearEditor() {
+    $('startTime').value='09:00'; $('endTime').value='18:00';
+    $('breakMinutes').value=60; $('shiftNote').value='';
+    clearMessage('formMessage'); updatePreview();
+  }
+  $('saveSettings').addEventListener('click', saveSettings);
+  $('hourlyRate').addEventListener('keydown', e => { if(e.key==='Enter') saveSettings(); });
+  $('payBasis').addEventListener('change', () => {
+    state.basis = $('payBasis').value;
+    renderCalendar();
+    updatePreview();
+    persist();
+  });
+  ['startTime','endTime','breakMinutes'].forEach(id => $(id).addEventListener('input',updatePreview));
+  $('shiftNote').addEventListener('input',()=>{});
+  $('prevMonth').addEventListener('click',()=>navigateMonth(-1));
+  $('nextMonth').addEventListener('click',()=>navigateMonth(1));
+  $('todayBtn').addEventListener('click',()=>{
+    const d=new Date(); state.viewYear=d.getFullYear(); state.viewMonth=d.getMonth();
+    persist(); renderCalendar();
+  });
+  $('yearSelect').addEventListener('change',()=>{
+    state.viewYear=Number($('yearSelect').value); persist(); renderCalendar();
+  });
+  $('monthSelect').addEventListener('change',()=>{
+    state.viewMonth=Number($('monthSelect').value); persist(); renderCalendar();
+  });
+  $('clearForm').addEventListener('click',clearEditor);
+  $('deleteShift').addEventListener('click',()=>{
+    if (!selectedKey || !state.shifts[selectedKey]) return;
+    const [y,m,d]=selectedKey.split('-').map(Number);
+    if (!confirm(`${y}년 ${m}월 ${d}일 근무 기록을 삭제할까요?`)) return;
+    delete state.shifts[selectedKey]; persist(); renderCalendar(); clearEditor();
+    $('deleteShift').disabled=true;
+    showMessage('formMessage','해당 날짜의 기록을 삭제했습니다.','success');
+  });
+  $('clearAll').addEventListener('click',()=>{
+    if (!confirm('저장된 모든 근무 기록과 시급 설정을 삭제할까요? 이 작업은 되돌릴 수 없습니다.')) return;
+    state.shifts={}; state.rate=''; state.basis='minute'; $('hourlyRate').value='';
+    $('payBasis').value='minute'; persist(); renderCalendar(); updatePreview();
+    showMessage('settingsMessage','모든 기록과 시급 설정을 초기화했습니다.','success');
+    if (selectedKey) selectDate(selectedKey);
+  });
+  $('exportCsv').addEventListener('click',()=>{
+    const y=state.viewYear,m=state.viewMonth;
+    const rows=[['날짜','출근','퇴근','휴게시간(분)','유급근무시간(시간)','시급(원)','예상일급(원)','메모']];
+    Object.keys(state.shifts).sort().filter(k=>k.startsWith(`${y}-${pad(m+1)}-`)).forEach(k=>{
+      const s=state.shifts[k], c=calcShift(s);
+      rows.push([k,s.start,s.end,s.breakMinutes,(c.minutes/60).toFixed(2),getRate(),Math.round(c.pay),s.note||'']);
+    });
+    if(rows.length===1){alert('이번 달에 저장된 근무 기록이 없습니다.');return;}
+    const csv='\uFEFF'+rows.map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+    const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob), a=document.createElement('a');
+    a.href=url; a.download=`아르바이트_급여기록_${y}-${pad(m+1)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  });
+
+  loadState();
+  $('hourlyRate').value = state.rate;
+  $('payBasis').value = state.basis;
+  selectedKey = state.selected;
+  if (selectedKey && !/^\d{4}-\d{2}-\d{2}$/.test(selectedKey)) selectedKey='';
+  renderCalendar();
+  if (selectedKey) selectDate(selectedKey);
+  else { $('noDate').hidden=false; $('shiftForm').hidden=true; }
+})();
+</script>
+</body>
+</html>
